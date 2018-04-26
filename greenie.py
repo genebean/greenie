@@ -1,117 +1,64 @@
-# Copyright (c) 2017 Adafruit Industries
-# Author: Tony DiCola & James DeVito
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+import subprocess
 import time
 
-import Adafruit_SSD1306
+import I2C_LCD_driver
+mylcd = I2C_LCD_driver.lcd(1)
 
-from PIL import Image
-from PIL import ImageDraw
-from PIL import ImageFont
+import SHT31_driver
+temp_rh_sensor = SHT31_driver.SHT31(1)
 
-import subprocess
+NIC = 'wlan0'
+DEGREE = chr(223)
 
-import sht31
-temp_rh_sensor = sht31.SHT31(1)
+def get_ip_address(ifname):
+    cmd = "ifconfig %s |grep 'inet ' |awk '{print $2}'" % ifname
+    return subprocess.check_output(cmd, shell = True)
 
-# Raspberry Pi pin configuration:
-RST = None     # on the PiOLED this pin isnt used
+def get_ssid(ifname):
+    cmd = "iwconfig %s |grep ESSID |rev |cut -d '\"' -f2 |rev" % ifname
+    return subprocess.check_output(cmd, shell = True)
 
-# 128x32 display with hardware I2C:
-# disp = Adafruit_SSD1306.SSD1306_128_32(rst=RST)
+def display_network_info(ssid, ip, display_seconds):
+    mylcd.lcd_clear()
+    if len(ssid) > 16:
+        str_pad = " " * 16
+        ssid = str_pad + ssid
+        mylcd.lcd_display_string(ip, 1)
+        for i in range (0, len(ssid)):
+            lcd_text = ssid[i:(i+16)]
+            mylcd.lcd_display_string(lcd_text,2)
+            sleep(0.4)
+            mylcd.lcd_display_string(str_pad,2)
+    else:
+        mylcd.lcd_display_string(IP, 1)
+        mylcd.lcd_display_string(SSID, 2)
+    time.sleep(display_seconds)
 
-# 128x64 display with hardware I2C:
-disp = Adafruit_SSD1306.SSD1306_128_64(rst=RST)
+def display_temp_rh(readings):
+    mylcd.lcd_clear()
+    temperature, humidity = temp_rh_sensor.get_temp_and_humidity(unit = 'F')
+    temp = int(round(temperature))
+    rh = int(round(humidity))
+    mylcd.lcd_display_string("Temp: %d%sF" % (temp, DEGREE), 1)
+    mylcd.lcd_display_string("RH: %d %%" % rh, 2)
+    time.sleep(1)
 
-# Note you can change the I2C address by passing an i2c_address parameter like:
-# disp = Adafruit_SSD1306.SSD1306_128_64(rst=RST, i2c_address=0x3C)
+    for reading in range(1, readings):
+        temperature, humidity = temp_rh_sensor.get_temp_and_humidity(unit = 'F')
+        new_temp = int(round(temperature))
+        new_rh = int(round(humidity))
+        if new_temp != temp:
+            mylcd.lcd_display_string("%d%sF" % (new_temp, DEGREE), 1, 6)
+        if new_rh != rh:
+            mylcd.lcd_display_string("%d %%" % new_rh, 2, 4)
+        time.sleep(1)
 
-# Alternatively you can specify an explicit I2C bus number, for example
-# with the 128x32 display you would use:
-# disp = Adafruit_SSD1306.SSD1306_128_32(rst=RST, i2c_bus=2)
-
-# Initialize library.
-disp.begin()
-
-# Clear display.
-disp.clear()
-disp.display()
-
-# Create blank image for drawing.
-# Make sure to create image with mode '1' for 1-bit color.
-width = disp.width
-height = disp.height
-image = Image.new('1', (width, height))
-
-# Get drawing object to draw on image.
-draw = ImageDraw.Draw(image)
-
-# Draw a black filled box to clear the image.
-draw.rectangle((0,0,width,height), outline=0, fill=0)
-
-# Draw some shapes.
-# First define some constants to allow easy resizing of shapes.
-padding = 1
-top = padding
-bottom = height-padding
-# Move left to right keeping track of the current x position for drawing shapes.
-x = 1
-
-
-# Load default font.
-#font = ImageFont.load_default()
-
-# Alternatively load a TTF font.  Make sure the .ttf font file is in the same directory as the python script!
-# Some other nice fonts to try: http://www.dafont.com/bitmap.php
-# font = ImageFont.truetype('Minecraftia.ttf', 8)
-header_font_size = 14
-body_font_size = 14
-font_header = ImageFont.truetype('Rubik-Light.ttf', header_font_size)
-font_body = ImageFont.truetype('Rubik-Light.ttf', body_font_size)
+# Start with a clean display
+mylcd.lcd_clear()
 
 while True:
+    SSID = get_ssid(NIC).rstrip()
+    IP = get_ip_address(NIC).rstrip()
+    display_network_info(SSID, IP, 3)
+    display_temp_rh(7)
 
-    # Draw a black filled box to clear the image.
-    draw.rectangle((0,0,width,height), outline=0, fill=0)
-
-    # Shell scripts for system monitoring from here : https://unix.stackexchange.com/questions/119126/command-to-display-memory-usage-disk-usage-and-cpu-load
-    cmd = "hostname -I | cut -d\' \' -f1"
-    IP = subprocess.check_output(cmd, shell = True )
-    cmd = "iwconfig wlan0 |grep ESSID |rev |cut -d '\"' -f2 |rev"
-    SSID = subprocess.check_output(cmd, shell = True )
-
-    # SHT31-D data
-    temperature, humidity = temp_rh_sensor.get_temp_and_humidity(unit = 'F')
-
-    # Write text.
-    row_padding = 2
-    row_2_start = top+row_padding + header_font_size
-    row_3_start = row_2_start + row_padding + body_font_size
-    row_4_start = row_3_start + row_padding + body_font_size
-
-    draw.text((x, top),         "IP: " + str(IP), font=font_header, fill=255)
-    draw.text((x, row_2_start), "SSID: " + str(SSID), font=font_header, fill=255)
-    draw.text((x, row_3_start), "Temp: %.0f F" %temperature,  font=font_body, fill=255)
-    draw.text((x, row_4_start), "RH: %.0f %%" %humidity, font=font_body, fill=255)
-
-    # Display image.
-    disp.image(image)
-    disp.display()
-    time.sleep(1)
