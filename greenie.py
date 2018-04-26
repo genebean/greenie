@@ -1,10 +1,8 @@
 import subprocess
 import time
 
-import I2C_LCD_driver
+from lib import I2C_LCD_driver, SHT31_driver
 mylcd = I2C_LCD_driver.lcd(1)
-
-import SHT31_driver
 temp_rh_sensor = SHT31_driver.SHT31(1)
 
 NIC = 'wlan0'
@@ -61,4 +59,3 @@ while True:
     IP = get_ip_address(NIC).rstrip()
     display_network_info(SSID, IP, 3)
     display_temp_rh(7)
-
