@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# Downloaded from http://abyz.me.uk/rpi/pigpio/examples.html
+# No license was included with this work. 
+
 import time
 import curses
 import atexit
