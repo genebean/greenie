@@ -1,7 +1,19 @@
 # Greenie
 
 This repo is a work in progress. Its goal is to provide some automation realted
-to a greenhouse.
+to a greenhouse. Currently, greenie reads the temperature and humidity from an
+SHT31-D and alternates showing the readings and the current network info on a
+16x2 LCD.
+
+The [utils/relay_test.py](utils/relay_test.py) shows how a set of
+relays can be controled. This will be expanded on in a later version of the
+code. To use relay_test.py as written you will need to install
+[pigpio](http://abyz.me.uk/rpi/pigpio/). On Raspbian this can be done like so:
+
+```
+sudo apt-get update
+sudo apt-get install pigpio python-pigpio python3-pigpio
+```
 
 ## Parts used with this code
 
