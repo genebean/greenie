@@ -1,4 +1,8 @@
 #!/usr/bin/python
+
+# Original code found at https://github.com/jaques/sht21_python/tree/cbf6a30114e8e76194e8fa01cd9fb49146a3b83f
+# The repository is licensed under the MIT License
+
 import fcntl
 import struct
 import time
