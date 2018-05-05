@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import subprocess
 import time
 
@@ -25,7 +27,7 @@ def display_network_info(ssid, ip, display_seconds):
         for i in range (0, len(ssid)):
             lcd_text = ssid[i:(i+16)]
             mylcd.lcd_display_string(lcd_text,2)
-            sleep(0.4)
+            time.sleep(0.4)
             mylcd.lcd_display_string(str_pad,2)
     else:
         mylcd.lcd_display_string(IP, 1)
@@ -59,3 +61,4 @@ while True:
     IP = get_ip_address(NIC).rstrip()
     display_network_info(SSID, IP, 3)
     display_temp_rh(7)
+
