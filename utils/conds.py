@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+# original code from https://github.com/ControlEverythingCommunity/SHT31/blob/a0c769187ea1b189ce2f2ae9f0b3255e6516e0a2/Python/SHT31.py
+
+# Distributed with a free-will license.
+# Use it any way you want, profit or free, provided it fits in the licenses of its associated works.
+# SHT31
+# This code is designed to work with the SHT31_I2CS I2C Mini Module available from ControlEverything.com.
+# https://www.controleverything.com/content/Humidity?sku=SHT31_I2CS#tabs-0-product_tabset-2
+
 import smbus
 import time
  
